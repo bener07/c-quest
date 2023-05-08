@@ -1,25 +1,55 @@
-#include <SDL2/SDL.h>
+#include <stdbool.h>
+#include <SDL3/SDL.h>
+#include <stdio.h>
 
-int main() {
-    SDL_Init(SDL_INIT_VIDEO);
+int main(int argc, char** argv) {
 
-    SDL_Window* window = SDL_CreateWindow("My Game", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 640, 480, SDL_WINDOW_SHOWN);
+    // Declaration
+    SDL_Window* window;
+    SDL_Renderer* renderer;
+    bool isRunning = true;
 
-    SDL_Surface* imageSurface = SDL_LoadBMP("image.bmp");
-    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, imageSurface);
+    // Initialisation
+    if(SDL_Init(SDL_INIT_VIDEO) != 0) {
+        printf("Unable to init SDL : %s", SDL_GetError());
+        return 1;
+    }
 
-    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    window = SDL_CreateWindow("MyWindow", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 640, 480, SDL_WINDOW_SHOWN);
+    if(window == NULL) {
+        printf("Unable to create window : %s", SDL_GetError());
+        return 1;
+    }
 
-    SDL_RenderClear(renderer);
-    SDL_RenderCopy(renderer, texture, NULL, NULL);
-    SDL_RenderPresent(renderer);
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    if(renderer == NULL) {
+        printf("Unable to create renderer : %s", SDL_GetError());
+        return 1;
+    }
 
-    SDL_Delay(3000);
+    // Infinite loop
+    while(isRunning) {
 
-    SDL_DestroyTexture(texture);
-    SDL_FreeSurface(imageSurface);
-    SDL_DestroyRenderer(renderer);
+        SDL_Event event;
+
+        if(SDL_PollEvent(&event)) {
+            if(event.type == SDL_QUIT) {
+                isRunning = false;
+            }
+        }
+
+        // Clear screen
+        SDL_RenderClear(renderer);
+
+        // render code goes here.....
+
+        // Render modification
+        SDL_RenderPresent(renderer);
+    }
+
+    // Free
     SDL_DestroyWindow(window);
+    SDL_DestroyRenderer(renderer);
     SDL_Quit();
 
     return 0;
