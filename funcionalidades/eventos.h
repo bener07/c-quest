@@ -1,11 +1,10 @@
-const int SCREEN_WIDTH = 640;
-const int SCREEN_HEIGHT = 480;
-const int SQUARE_SIZE = 50;
+
+const int squareSize = 32;
 
 
 int QUIT = 0;
-int characterX = (SCREEN_WIDTH / 2 - SQUARE_SIZE /2);
-int characterY = (SCREEN_HEIGHT / 2 - SQUARE_SIZE /2);
+int characterX = (windowWidth / 2 - squareSize /2);
+int characterY = (windowHeight / 2 - squareSize /2);
 int SPEED = 10;
 
 void handleEvents() {
@@ -18,17 +17,19 @@ void handleEvents() {
             case SDL_KEYDOWN:
                 // Handle key press events
                 switch (event.key.keysym.sym) {
+                    // character movement in the box
                     case SDLK_UP:
-                        characterY -= (characterY <= 0 ) ? 0 : SPEED;
+                    // in case the caracter is hitting the 0 position or lower, it gets near its
+                        characterY -= (characterY <= 2 ) ? 0 : SPEED;
                         break;
                     case SDLK_DOWN:
-                        characterY += (characterY+SQUARE_SIZE >= SCREEN_HEIGHT) ? SCREEN_HEIGHT - (characterY+SQUARE_SIZE) : SPEED;
+                        characterY += (characterY+squareSize >= windowHeight) ? windowHeight - (characterY+squareSize) : SPEED;
                         break;
                     case SDLK_LEFT:
-                        characterX -= SPEED;
+                        characterX -= (characterX <= 2) ? (characterX) : SPEED;
                         break;
                     case SDLK_RIGHT:
-                        characterX += SPEED;
+                        characterX += (characterX+squareSize >= windowWidth) ? windowWidth - (characterX+squareSize) : SPEED;
                         break;
                     default:
                         break;
