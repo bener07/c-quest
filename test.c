@@ -1,109 +1,115 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <gif_lib.h>
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 
-#define CHARACTER_WIDTH 16
-#define CHARACTER_HEIGHT 16
+// Constants
+const int WINDOW_WIDTH = 800;
+const int WINDOW_HEIGHT = 600;
+const int SQUARE_SIZE = 32;
+const int Character_Rendering_XPosition = 0;
+const int Character_Rendering_YPosition = 0;
+const int CROP_RECT_WIDTH = 16;
+const int CROP_RECT_HEIGHT = 16;
 
 int main() {
     // Initialize SDL
     SDL_Init(SDL_INIT_VIDEO);
 
     // Create a window
-    SDL_Window* window = SDL_CreateWindow("Character Animation", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 800, 600, SDL_WINDOW_SHOWN);
+    SDL_Window* window = SDL_CreateWindow("SDL Image Cropping", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+                                          WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_SHOWN);
+    if (window == NULL) {
+        printf("Failed to create window: %s\n", SDL_GetError());
+        return -1;
+    }
 
     // Create a renderer
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-
-    // Open the GIF file using giflib
-    GifFileType* gifFile = DGifOpenFileName("idle_down.gif", NULL);
-    if (!gifFile) {
-        printf("Failed to open GIF file\n");
-        return 1;
+    if (renderer == NULL) {
+        printf("Failed to create renderer: %s\n", SDL_GetError());
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return -1;
     }
 
-    // Read the GIF file
-    int errorCode;
-    if ((errorCode = DGifSlurp(gifFile)) != GIF_OK) {
-        printf("Failed to read GIF file: %d\n", errorCode);
-        DGifCloseFile(gifFile, NULL);
-        return 1;
+    // Initialize SDL_image
+    int imgFlags = IMG_INIT_PNG;
+    if (!(IMG_Init(imgFlags) & imgFlags)) {
+        printf("Failed to initialize SDL_image: %s\n", IMG_GetError());
+        SDL_DestroyRenderer(renderer);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return -1;
     }
 
-    // Get the number of frames in the animation
-    int frameCount = gifFile->ImageCount;
-    int currentFrame = 0;
+    // Load the image
+    SDL_Surface* imageSurface = IMG_Load("hero1.png");
+    if (imageSurface == NULL) {
+        printf("Failed to load image: %s\n", IMG_GetError());
+        SDL_DestroyRenderer(renderer);
+        SDL_DestroyWindow(window);
+        IMG_Quit();
+        SDL_Quit();
+        return -1;
+    }
 
-    // Create a texture to hold the character frames
-    SDL_Texture* texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, CHARACTER_WIDTH, CHARACTER_HEIGHT);
-    if (!texture) {
+    // Create a texture from the image surface
+    SDL_Texture* imageTexture = SDL_CreateTextureFromSurface(renderer, imageSurface);
+    SDL_FreeSurface(imageSurface);
+    if (imageTexture == NULL) {
         printf("Failed to create texture: %s\n", SDL_GetError());
-        DGifCloseFile(gifFile, NULL);
-        return 1;
+        SDL_DestroyRenderer(renderer);
+        SDL_DestroyWindow(window);
+        IMG_Quit();
+        SDL_Quit();
+        return -1;
     }
 
-    // Main loop
+    // Set the rectangle to crop from the image
+    SDL_Rect cropRect;
+    cropRect.x = Character_Rendering_XPosition;
+    cropRect.y = Character_Rendering_YPosition;
+    cropRect.w = CROP_RECT_WIDTH;
+    cropRect.h = CROP_RECT_HEIGHT;
+
+    // Calculate the scale factor to fit the cropped image into the square
+    double scaleFactor = (double)SQUARE_SIZE / CROP_RECT_WIDTH;
+
+    // Calculate the scaled dimensions of the cropped image
+    int scaledWidth = CROP_RECT_WIDTH * scaleFactor;
+    int scaledHeight = CROP_RECT_HEIGHT * scaleFactor;
+
+    // Calculate the position of the scaled image within the square
+    int squareX = (WINDOW_WIDTH - SQUARE_SIZE) / 2;
+    int squareY = (WINDOW_HEIGHT - SQUARE_SIZE) / 2;
+
+    // Calculate the position of the scaled image within the square
+    int imageX = squareX + (SQUARE_SIZE - scaledWidth) / 2;
+    int imageY = squareY + (SQUARE_SIZE - scaledHeight) / 2;
+
+    // Render the scaled cropped image to the renderer
+    SDL_Rect destRect;
+    destRect.x = imageX;
+    destRect.y = imageY;
+    destRect.w = scaledWidth;
+    destRect.h = scaledHeight;
+    SDL_RenderCopyEx(renderer, imageTexture, &cropRect, &destRect, 0, NULL, SDL_FLIP_NONE);
+
+    // Render to the screen
+    SDL_RenderPresent(renderer);
+
+    // Wait for user to quit
     SDL_Event event;
-    int quit = 0;
-    while (!quit) {
-        // Handle events
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT) {
-                quit = 1;
-            }
-        }
-
-        // Clear the renderer
-        SDL_RenderClear(renderer);
-
-        // Get the current frame's image
-        GifImageDesc* imageDesc = &gifFile->SavedImages[currentFrame].ImageDesc;
-        GifByteType* imageData = gifFile->SavedImages[currentFrame].RasterBits;
-
-        // Lock the texture for writing
-        void* texturePixels;
-        int texturePitch;
-        SDL_LockTexture(texture, NULL, &texturePixels, &texturePitch);
-
-        // Copy the character data to the texture
-        for (int y = 0; y < CHARACTER_HEIGHT; y++) {
-            for (int x = 0; x < CHARACTER_WIDTH; x++) {
-                // Calculate the index of the current pixel in the GIF data
-                int gifIndex = y * CHARACTER_WIDTH + x;
-                // Calculate the index of the current pixel in the texture data
-                int textureIndex = y * texturePitch + x * sizeof(uint32_t);
-                // Copy the pixel data from the GIF to the texture
-                ((uint32_t*)texturePixels)[textureIndex / sizeof(uint32_t)] = imageData[gifIndex];
-            }
-        }
-
-        // Unlock the texture
-        SDL_UnlockTexture(texture);
-
-        // Render the texture
-        SDL_RenderCopy(renderer, texture, NULL, NULL);
-
-        // Update the renderer
-        SDL_RenderPresent(renderer);
-
-        // Delay between frames (adjust this to control the animation speed)
-        SDL_Delay(100);
-
-        // Move to the next frame
-        currentFrame++;
-        if (currentFrame >= frameCount) {
-            currentFrame = 0;
+    while (SDL_WaitEvent(&event)) {
+        if (event.type == SDL_QUIT) {
+            break;
         }
     }
 
-    // Clean up the GIF file
-    DGifCloseFile(gifFile, NULL);
-
-    // Clean up SDL
-    SDL_DestroyTexture(texture);
+    // Clean up resources
+    SDL_DestroyTexture(imageTexture);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
+    IMG_Quit();
     SDL_Quit();
 
     return 0;

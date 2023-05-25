@@ -1,7 +1,8 @@
 
 const int squareSize = 32;
 
-
+const int CROP_RECT_WIDTH = 16;
+const int CROP_RECT_HEIGHT = 16;
 int QUIT = 0;
 int characterX = (windowWidth / 2 - squareSize /2);
 int characterY = (windowHeight / 2 - squareSize /2);
