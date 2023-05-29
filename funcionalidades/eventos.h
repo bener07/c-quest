@@ -1,14 +1,7 @@
-
-const int squareSize = 32;
-
-const int CROP_RECT_WIDTH = 16;
-const int CROP_RECT_HEIGHT = 16;
 int QUIT = 0;
-int characterX = (windowWidth / 2 - squareSize /2);
-int characterY = (windowHeight / 2 - squareSize /2);
-int SPEED = 10;
+int FRAME_DELAY = 300;
 
-void handleEvents() {
+void handleEvents(Personagem *Character) {
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
         switch (event.type) {
@@ -21,22 +14,30 @@ void handleEvents() {
                     // character movement in the box
                     case SDLK_UP:
                     // in case the caracter is hitting the 0 position or lower, it gets near its
-                        characterY -= (characterY <= 2 ) ? 0 : SPEED;
+                        Character->Img_Rendering_YPosition = 32;
+                        Character->y -= (Character->y <= 2 ) ? 0 : Character->speed;
                         break;
                     case SDLK_DOWN:
-                        characterY += (characterY+squareSize >= windowHeight) ? windowHeight - (characterY+squareSize) : SPEED;
+                        Character->Img_Rendering_YPosition = 48;
+                        Character->y += (Character->y+Character->Character_Dest_Rect_Size >= windowHeight) ? windowHeight - (Character->y+Character->Character_Dest_Rect_Size) : Character->speed;
                         break;
                     case SDLK_LEFT:
-                        characterX -= (characterX <= 2) ? (characterX) : SPEED;
+                        Character->Img_Rendering_YPosition = 16;
+                        // Character_Rendering_YPosition = (Character_Rendering_YPosition == CROP_RECT_HEIGHT) ? Character_Rendering_YPosition : CROP_RECT_HEIGHT;
+                        Character->x -= (Character->x <= 2) ? (Character->x) : Character->speed;
                         break;
                     case SDLK_RIGHT:
-                        characterX += (characterX+squareSize >= windowWidth) ? windowWidth - (characterX+squareSize) : SPEED;
+                        Character->Img_Rendering_YPosition = 16;
+                        printf("To right\n");
+                        Character->x += (Character->x+Character->Character_Dest_Rect_Size >= windowWidth) ? windowWidth - (Character->x+Character->Character_Dest_Rect_Size) : Character->speed;
                         break;
                     default:
                         break;
                 }
                 break;
             default:
+                Character->Img_Rendering_YPosition = 0;
+                Character->Img_Rendering_XPosition = 0;
                 break;
         }
     }

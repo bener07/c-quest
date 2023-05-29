@@ -4,6 +4,7 @@
 // Creates a Panel and returns an Object as a renderer
 // it's only to make it easier
 int renderObject(SDL_Rect* Object, int x_pos, int y_pos, int height, int width){
+    printf("%d", x_pos);
     Object->x = x_pos;
     Object->y = y_pos;
     Object->h = height;
@@ -11,3 +12,89 @@ int renderObject(SDL_Rect* Object, int x_pos, int y_pos, int height, int width){
     return 0;
 }
 
+
+int initCharacter(Personagem *Character, SDL_Renderer *renderer ,SDL_Texture *imageTexture,SDL_Rect *Character_Dest_Rect, SDL_Rect *Character_Img_Rendering_Rect){
+    Character->Character_Dest_Rect_Size = 32;
+    Character->renderer = renderer;
+    Character->imageTexture = imageTexture;
+    Character->ImageObject = Character_Img_Rendering_Rect;
+
+    // Calculate the scale factor to fit the cropped image into the Character_Dest_Rect
+    double scaleFactor = (double)Character->Character_Dest_Rect_Size / Character->CROP_RECT_WIDTH;
+
+    // Calculate the scaled dimensions of the cropped image
+    int scaledWidth = Character->CROP_RECT_WIDTH * scaleFactor;
+    int scaledHeight = Character->CROP_RECT_HEIGHT * scaleFactor;
+
+    // square X and Y
+    int squareX = (windowWidth - Character->Character_Dest_Rect_Size) / 2;
+    int squareY = (windowHeight - Character->Character_Dest_Rect_Size) / 2;
+
+    // Calculate the position of the scaled image within the Character_Dest_Rect
+    int imageX = squareX + (Character->Character_Dest_Rect_Size - scaledWidth) / 2;
+    int imageY = squareY + (Character->Character_Dest_Rect_Size - scaledHeight) / 2;
+
+    Character->Img_Rendering_XPosition = 0;
+    Character->Img_Rendering_YPosition = 0;
+    Character->scaledHeight = scaledHeight;
+    Character->scaledWidth = scaledWidth;
+    Character->CROP_RECT_HEIGHT = 16;
+    Character->CROP_RECT_WIDTH = 16;
+    Character->IMAGE_COUNT = 3;
+    Character->x = squareX;
+    Character->y = squareY;
+    Character->speed = 10;
+    Character->age = 200;
+    renderObject(
+        Character->ImageObject,
+        Character->Img_Rendering_XPosition,
+        Character->Img_Rendering_YPosition,
+        Character->CROP_RECT_WIDTH,
+        Character->CROP_RECT_HEIGHT
+    );
+    printf("Rendering the initial image\n");
+    // Draw the character Square
+    renderObject(
+            Character->Object,
+            Character->x,
+            Character->y,
+            Character->scaledHeight,
+            Character->scaledWidth
+    );
+    return 0;
+}
+
+
+int characterAnimationRendering(Personagem *Character){
+    /* A variável IMAGE_COUNT tem a quantidade total de caracteres que existem na imagem
+       assim se tivermos 3 imagens então vamos contar como sendo 6 pois aí conta-mos todos os valores
+       da animação em que 3 imagens vão andar para a frente (Character->CROP_RECT_WIDTH) ou para trás (-Character->CROP_RECT_WIDTH)
+    */
+    if(Character->Img_Rendering_XPosition <= Character->CROP_RECT_WIDTH * Character->IMAGE_COUNT*2)
+        return (Character->Img_Rendering_XPosition <= Character->CROP_RECT_WIDTH) ? Character->CROP_RECT_WIDTH : -Character->CROP_RECT_WIDTH;
+}
+
+
+
+int renderCharacter(Personagem *Character){
+    // draw the rect of the image character
+    renderObject(
+        Character->ImageObject,
+        Character->Img_Rendering_XPosition,
+        Character->Img_Rendering_YPosition,
+        Character->CROP_RECT_WIDTH,
+        Character->CROP_RECT_HEIGHT
+    );
+    printf("Rendering Character\n");
+    // Draw the character Square
+    renderObject(
+            Character->Object,
+            Character->x,
+            Character->y,
+            Character->scaledHeight,
+            Character->scaledWidth
+    );
+    Character->Img_Rendering_XPosition += characterAnimationRendering(Character);
+    SDL_RenderCopyEx(Character->renderer, Character->imageTexture, Character->ImageObject, Character->Object, 0, NULL, SDL_FLIP_NONE);
+    return 0;
+}

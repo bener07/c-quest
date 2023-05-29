@@ -1,3 +1,20 @@
-int square(int vetor[3]){
-    return 0;
-}
+typedef struct {
+    SDL_Renderer *renderer;
+    SDL_Texture *imageTexture;
+    SDL_Rect *Object;
+    SDL_Rect *ImageObject;
+    int Img_Rendering_XPosition;
+    int Img_Rendering_YPosition;
+    int scaledHeight;
+    int scaledWidth;
+    int CROP_RECT_WIDTH;
+    int CROP_RECT_HEIGHT;
+    int IMAGE_COUNT;
+    int Character_Dest_Rect_Size;
+    int x;
+    int y;
+    int speed;
+    int life;
+    int money;
+    int age;
+} Personagem;
