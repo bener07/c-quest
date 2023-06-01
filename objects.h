@@ -13,12 +13,11 @@ typedef struct {
     int Character_Dest_Rect_Size;
     int FramesCount;
     int FrameLoop;
+    char *name;
     int x;
     int y;
     int speed;
     int life;
-    int money;
-    int age;
 } Personagem;
 
 typedef struct{

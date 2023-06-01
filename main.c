@@ -36,28 +36,60 @@ void gameLoop(){
     }
 
     // load image character for Idle
-    SDL_Texture* imageTexture = loadImage("hero1 32.png");
-
+    SDL_Texture* characterImageTexture = loadImage("hero1 32.png");
+    SDL_Texture* enemyImageTexture = loadImage("hero1.png");
     // Set the rectangle to crop from the image
     // this will control which caracter to be rendered
     SDL_Rect Idle_Img_Rendering_Rect;
     SDL_Rect Idle_Dest_Rect;
+    SDL_Rect Enemy_Img_Rendering_Rect;
+    SDL_Rect Enemy_Dest_Rect;
     Personagem Idle;
-    initCharacter(&Idle, renderer, imageTexture, &Idle_Img_Rendering_Rect, &Idle_Dest_Rect);
+    Personagem Enemy;
+    // it's Idle
+    initCharacter(
+                    "Idle",
+                    &Idle,
+                    renderer,
+                    characterImageTexture,
+                    &Idle_Img_Rendering_Rect,
+                    &Idle_Dest_Rect,
+                    0,
+                    0,
+                    32,
+                    32,
+                    32
+                    );
+    // it's an enemy
+    initCharacter(
+                    "Enemy",
+                    &Enemy,
+                    renderer,
+                    enemyImageTexture,
+                    &Enemy_Img_Rendering_Rect,
+                    &Enemy_Dest_Rect,
+                    10,
+                    10,
+                    16,
+                    16,
+                    16);
     // Clear the renderer
     SDL_RenderClear(renderer);
-    SDL_RenderCopy(renderer, imageTexture, &Idle_Img_Rendering_Rect, NULL);
+    SDL_RenderCopy(renderer, characterImageTexture, &Idle_Img_Rendering_Rect, NULL);
+    SDL_RenderCopy(renderer, enemyImageTexture, &Enemy_Img_Rendering_Rect, NULL);
+
 
     // Wait for the user to close the window
     while (!QUIT) {
         handleEvents(&Idle);
         SDL_RenderClear(renderer);
         renderCharacter(&Idle);
-        SDL_RenderCopyEx(renderer, imageTexture, Idle.ImageObject, Idle.Object, 0, NULL, SDL_FLIP_NONE);
+        SDL_RenderCopyEx(renderer, characterImageTexture, Idle.ImageObject, Idle.Object, 0, NULL, SDL_FLIP_NONE);
 
         // Update the screen
         SDL_RenderPresent(renderer);
     }
+    
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();

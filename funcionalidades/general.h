@@ -36,15 +36,22 @@ SDL_Texture *loadImage(char *location){
 }
 
 int initCharacter(
+                char *Name,
                 Personagem *Character,
                 SDL_Renderer *renderer,
                 SDL_Texture *imageTexture,
                 SDL_Rect *Character_Dest_Rect,
-                SDL_Rect *Character_Img_Rendering_Rect)
+                SDL_Rect *Character_Img_Rendering_Rect,
+                int x,
+                int y,
+                int height,
+                int width,
+                int size)
     {
-    Character->CROP_RECT_WIDTH = 32;
-    Character->CROP_RECT_HEIGHT = 32;
-    Character->Character_Dest_Rect_Size = 32;
+    Character->name = Name;
+    Character->CROP_RECT_WIDTH = height;
+    Character->CROP_RECT_HEIGHT = width;
+    Character->Character_Dest_Rect_Size = size;
     Character->renderer = renderer;
     Character->imageTexture = imageTexture;
     Character->ImageObject = Character_Img_Rendering_Rect;
@@ -62,8 +69,8 @@ int initCharacter(
     int squareY = (windowHeight - Character->Character_Dest_Rect_Size) / 2;
 
     // Calculate the position of the scaled image within the Character_Dest_Rect
-    int imageX = squareX + (Character->Character_Dest_Rect_Size - scaledWidth) / 2;
-    int imageY = squareY + (Character->Character_Dest_Rect_Size - scaledHeight) / 2;
+    int imageX = x + (squareX + (Character->Character_Dest_Rect_Size - scaledWidth) / 2);
+    int imageY = y + (squareY + (Character->Character_Dest_Rect_Size - scaledHeight) / 2);
 
     Character->Img_Rendering_XPosition = 0;
     Character->Img_Rendering_YPosition = 0;
@@ -73,7 +80,6 @@ int initCharacter(
     Character->x = imageX;
     Character->y = imageY;
     Character->speed = 5;
-    Character->age = 200;
     Character->FramesCount = 60;
     Character->FrameLoop = 0;
     // cropRect
