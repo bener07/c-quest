@@ -11,6 +11,8 @@ typedef struct {
     int CROP_RECT_HEIGHT;
     int IMAGE_COUNT;
     int Character_Dest_Rect_Size;
+    int FramesCount;
+    int FrameLoop;
     int x;
     int y;
     int speed;

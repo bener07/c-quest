@@ -12,7 +12,6 @@
                 "${fileDirname}/${fileBasenameNoExtension}",
                 "`sdl2-config --cflags --libs`",
                 "-lSDL2_image",
-                "-lgif"
             ],
             "options": {
                 "cwd": "${fileDirname}"

@@ -5,7 +5,7 @@
 #include "objects.h"
 
 int QUIT = 0;
-int FRAME_DELAY = 500;
+int FRAME_DELAY = 50;
 
 // main loop to handle the entire game
 // it makes it easier to handle alterations
@@ -13,13 +13,15 @@ void gameLoop(){
     SDL_Window* window = SDL_CreateWindow("Character Movement",
                                           SDL_WINDOWPOS_UNDEFINED,
                                           SDL_WINDOWPOS_UNDEFINED,
-                                          0, 0,
+                                          800, 600,
                                           SDL_WINDOW_FULLSCREEN_DESKTOP);
     // renderer variable where you write all the forms and vectors
     int windowWidth, windowHeight;
     SDL_GetWindowSize(window, &windowWidth, &windowHeight);
     #include "funcionalidades/eventos.h"
     #include "funcionalidades/general.h"
+
+
     SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
     // Initialize the images
@@ -32,8 +34,8 @@ void gameLoop(){
         exit(0);
     }
 
-    // load image character for IDle
-    SDL_Surface* imageSurface = IMG_Load("hero1.png");
+    // load image character for Idle
+    SDL_Surface* imageSurface = IMG_Load("hero2.png");
     if (imageSurface == NULL) {
         printf("Failed to load image: %s\n", IMG_GetError());
         SDL_DestroyRenderer(renderer);
@@ -59,7 +61,7 @@ void gameLoop(){
     SDL_Rect Idle_Img_Rendering_Rect;
     SDL_Rect Idle_Dest_Rect;
     Personagem Idle;
-    initCharacter(&Idle, renderer, imageTexture,&Idle_Img_Rendering_Rect, &Idle_Dest_Rect);
+    initCharacter(&Idle, renderer, imageTexture, &Idle_Img_Rendering_Rect, &Idle_Dest_Rect);
     // Clear the renderer
     SDL_RenderClear(renderer);
     SDL_RenderCopy(renderer, imageTexture, &Idle_Img_Rendering_Rect, NULL);
@@ -69,9 +71,10 @@ void gameLoop(){
         handleEvents(&Idle);
         SDL_RenderClear(renderer);
         renderCharacter(&Idle);
+        SDL_RenderCopyEx(renderer, imageTexture, Idle.ImageObject, Idle.Object, 0, NULL, SDL_FLIP_NONE);
+
         // Update the screen
         SDL_RenderPresent(renderer);
-        SDL_Delay(FRAME_DELAY);
     }
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
