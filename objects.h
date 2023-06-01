@@ -20,3 +20,17 @@ typedef struct {
     int money;
     int age;
 } Personagem;
+
+typedef struct{
+    SDL_Renderer *renderer;
+    SDL_Texture *imageTexture;
+    SDL_Rect *Object;
+    SDL_Rect *ImageObject;
+    int Img_Rendering_XPosition;
+    int Img_Rendering_YPosition;
+    int scaledHeight;
+    int scaledWidth;
+    int CROP_RECT_WIDTH;
+    int CROP_RECT_HEIGHT;
+    int Character_Dest_Rect_Size;
+} Objeto;

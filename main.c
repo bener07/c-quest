@@ -18,11 +18,12 @@ void gameLoop(){
     // renderer variable where you write all the forms and vectors
     int windowWidth, windowHeight;
     SDL_GetWindowSize(window, &windowWidth, &windowHeight);
-    #include "funcionalidades/eventos.h"
-    #include "funcionalidades/general.h"
-
 
     SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+
+    // include libraries after creating the renderer
+    #include "funcionalidades/eventos.h"
+    #include "funcionalidades/general.h"
 
     // Initialize the images
     int imgFlags = IMG_INIT_PNG;
@@ -35,26 +36,7 @@ void gameLoop(){
     }
 
     // load image character for Idle
-    SDL_Surface* imageSurface = IMG_Load("hero2.png");
-    if (imageSurface == NULL) {
-        printf("Failed to load image: %s\n", IMG_GetError());
-        SDL_DestroyRenderer(renderer);
-        SDL_DestroyWindow(window);
-        IMG_Quit();
-        SDL_Quit();
-        exit(0);
-    }
-    // Create a texture from the image surface
-    SDL_Texture* imageTexture = SDL_CreateTextureFromSurface(renderer, imageSurface);
-    SDL_FreeSurface(imageSurface);
-    if (imageTexture == NULL) {
-        printf("Failed to create texture: %s\n", SDL_GetError());
-        SDL_DestroyRenderer(renderer);
-        SDL_DestroyWindow(window);
-        IMG_Quit();
-        SDL_Quit();
-        exit(0);
-    }
+    SDL_Texture* imageTexture = loadImage("hero1 32.png");
 
     // Set the rectangle to crop from the image
     // this will control which caracter to be rendered

@@ -11,6 +11,30 @@ int renderObject(SDL_Rect* Object, int x_pos, int y_pos, int height, int width){
     return 0;
 }
 
+SDL_Texture *loadImage(char *location){
+    SDL_Surface* imageSurface = IMG_Load(location);
+    if (imageSurface == NULL) {
+        printf("Failed to load image: %s\n", IMG_GetError());
+        SDL_DestroyRenderer(renderer);
+        SDL_DestroyWindow(window);
+        IMG_Quit();
+        SDL_Quit();
+        exit(0);
+    }
+    // Create a texture from the image surface
+    SDL_Texture* imageTexture = SDL_CreateTextureFromSurface(renderer, imageSurface);
+    SDL_FreeSurface(imageSurface);
+    if (imageTexture == NULL) {
+        printf("Failed to create texture: %s\n", SDL_GetError());
+        SDL_DestroyRenderer(renderer);
+        SDL_DestroyWindow(window);
+        IMG_Quit();
+        SDL_Quit();
+        exit(0);
+    }
+    return imageTexture;
+}
+
 int initCharacter(
                 Personagem *Character,
                 SDL_Renderer *renderer,
@@ -18,9 +42,9 @@ int initCharacter(
                 SDL_Rect *Character_Dest_Rect,
                 SDL_Rect *Character_Img_Rendering_Rect)
     {
-    Character->CROP_RECT_WIDTH = 16;
-    Character->CROP_RECT_HEIGHT = 16;
-    Character->Character_Dest_Rect_Size = 16;
+    Character->CROP_RECT_WIDTH = 32;
+    Character->CROP_RECT_HEIGHT = 32;
+    Character->Character_Dest_Rect_Size = 32;
     Character->renderer = renderer;
     Character->imageTexture = imageTexture;
     Character->ImageObject = Character_Img_Rendering_Rect;

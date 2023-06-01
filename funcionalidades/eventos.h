@@ -14,23 +14,22 @@ void handleEvents(Personagem *Character) {
                     // character movement in the box
                     case SDLK_w:
                     case SDLK_UP:
-                        Character->Img_Rendering_YPosition = 16*2;
+                        Character->Img_Rendering_YPosition = Character->CROP_RECT_HEIGHT*5;
                         Character->y -= (Character->y <= 2 ) ? 0 : Character->speed;
                         break;
                     case SDLK_s:
                     case SDLK_DOWN:
-                        Character->Img_Rendering_YPosition = 16*3;
+                        Character->Img_Rendering_YPosition = Character->CROP_RECT_HEIGHT*3;
                         Character->y += (Character->y+Character->Character_Dest_Rect_Size >= windowHeight) ? windowHeight - (Character->y+Character->Character_Dest_Rect_Size) : Character->speed;
                         break;
                     case SDLK_a:
                     case SDLK_LEFT: 
-                        Character->Img_Rendering_YPosition = 16*6;
-                        // Character_Rendering_YPosition = (Character_Rendering_YPosition == CROP_RECT_HEIGHT) ? Character_Rendering_YPosition : CROP_RECT_HEIGHT;
+                        Character->Img_Rendering_YPosition = Character->CROP_RECT_HEIGHT*6;
                         Character->x -= (Character->x <= 2) ? (Character->x) : Character->speed;
                         break;
                     case SDLK_d:
                     case SDLK_RIGHT:
-                        Character->Img_Rendering_YPosition = 16*4;
+                        Character->Img_Rendering_YPosition = Character->CROP_RECT_HEIGHT*4;
                         Character->x += (Character->x+Character->Character_Dest_Rect_Size >= windowWidth) ? windowWidth - (Character->x+Character->Character_Dest_Rect_Size) : Character->speed;
                         break;
                     default:
