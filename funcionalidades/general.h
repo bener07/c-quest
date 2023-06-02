@@ -37,24 +37,25 @@ SDL_Texture *loadImage(char *location){
 
 int initCharacter(
                 char *Name,
+                char *imageLocation,
                 Personagem *Character,
                 SDL_Renderer *renderer,
-                SDL_Texture *imageTexture,
-                SDL_Rect *Character_Dest_Rect,
-                SDL_Rect *Character_Img_Rendering_Rect,
                 int x,
                 int y,
                 int height,
                 int width,
-                int size)
+                int size,
+                int speed)
     {
     Character->name = Name;
-    Character->CROP_RECT_WIDTH = height;
-    Character->CROP_RECT_HEIGHT = width;
+    Character->CROP_RECT_WIDTH = width;
+    Character->CROP_RECT_HEIGHT = height;
     Character->Character_Dest_Rect_Size = size;
     Character->renderer = renderer;
-    Character->imageTexture = imageTexture;
+    Character->imageTexture = loadImage(imageLocation);
+    SDL_Rect *Character_Img_Rendering_Rect = malloc(sizeof(SDL_Rect));
     Character->ImageObject = Character_Img_Rendering_Rect;
+    SDL_Rect *Character_Dest_Rect = malloc(sizeof(SDL_Rect));
     Character->Object = Character_Dest_Rect;
 
     // Calculate the scale factor to fit the cropped image into the Character_Dest_Rect
@@ -79,8 +80,8 @@ int initCharacter(
     Character->IMAGE_COUNT = 3;
     Character->x = imageX;
     Character->y = imageY;
-    Character->speed = 5;
-    Character->FramesCount = 60;
+    Character->speed = speed;
+    Character->FramesCount = 300;
     Character->FrameLoop = 0;
     // cropRect
     renderObject(
@@ -99,6 +100,7 @@ int initCharacter(
             Character->scaledHeight,
             Character->scaledWidth
     );
+    SDL_RenderCopy(renderer, Character->imageTexture, Character->ImageObject, NULL);
     return 0;
 }
 
@@ -118,7 +120,6 @@ int characterAnimationRendering(Personagem *Character){
 }
 
 
-
 int renderCharacter(Personagem *Character){
     // draw the rect of the image character
     renderObject(
@@ -136,6 +137,193 @@ int renderCharacter(Personagem *Character){
             Character->scaledHeight,
             Character->scaledWidth
     );
+    SDL_RenderCopyEx(renderer, Character->imageTexture, Character->ImageObject, Character->Object, 0, NULL, SDL_FLIP_NONE);
     Character->Img_Rendering_XPosition += characterAnimationRendering(Character);
+    return 0;
+}
+
+
+int renderGameObject(Objeto *objeto){
+    // draw the rect of the image character
+    renderObject(
+        objeto->ImageObject,
+        objeto->Img_Rendering_XPosition,
+        objeto->Img_Rendering_YPosition,
+        objeto->CROP_RECT_WIDTH,
+        objeto->CROP_RECT_HEIGHT
+    );
+    // Draw the character Square
+    renderObject(
+        objeto->Object,
+        objeto->x,
+        objeto->y,
+        objeto->scaledHeight,
+        objeto->scaledWidth
+    );
+    SDL_RenderCopyEx(renderer, objeto->imageTexture, objeto->ImageObject, objeto->Object, 0, NULL, SDL_FLIP_NONE);
+    return 0;
+}
+
+
+TTF_Font *loadFont(char *location, char size){
+    TTF_Font* font = TTF_OpenFont(location, size);
+    if (font == NULL) {
+        printf("Failed to load font: %s\n", TTF_GetError());
+        SDL_DestroyRenderer(renderer);
+        SDL_DestroyWindow(window);
+        TTF_Quit();
+        SDL_Quit();
+        return font;
+    }
+    return font;
+}
+
+int initObject(
+                Objeto *objeto,
+                char *Name,
+                int width,
+                int height,
+                int size,
+                int x,
+                int y,
+                char *imageLocation){
+    objeto->objectName = Name;
+    objeto->CROP_RECT_WIDTH = width;
+    objeto->CROP_RECT_HEIGHT = height;
+    objeto->Dest_Rect_Size = size;
+    objeto->renderer = renderer;
+    objeto->imageTexture = loadImage(imageLocation);
+    objeto->IMAGE_COUNT = 0;
+    objeto->FramesCount = 0;
+    objeto->FrameLoop = 0;
+
+    SDL_Rect *Img_Rendering_Rect = malloc(sizeof(SDL_Rect));
+    objeto->ImageObject = Img_Rendering_Rect;
+
+    SDL_Rect *Dest_Rect = malloc(sizeof(SDL_Rect));
+    objeto->Object = Dest_Rect;
+
+    // Calculate the scale factor to fit the cropped image into the Character_Dest_Rect
+    double scaleFactor = (double)objeto->Dest_Rect_Size / objeto->CROP_RECT_WIDTH;
+
+    // Calculate the scaled dimensions of the cropped image
+    int scaledWidth = objeto->CROP_RECT_WIDTH * scaleFactor;
+    int scaledHeight = objeto->CROP_RECT_HEIGHT * scaleFactor;
+
+    // square X and Y
+    int squareX = (windowWidth - objeto->Dest_Rect_Size) / 2;
+    int squareY = (windowHeight - objeto->Dest_Rect_Size) / 2;
+
+    // Calculate the position of the scaled image within the Character_Dest_Rect
+    int imageX = x + (squareX + (objeto->Dest_Rect_Size - scaledWidth) / 2);
+    int imageY = y + (squareY + (objeto->Dest_Rect_Size - scaledHeight) / 2);
+
+    objeto->Img_Rendering_XPosition = 0;
+    objeto->Img_Rendering_YPosition = 0;
+    objeto->scaledHeight = scaledHeight;
+    objeto->scaledWidth = scaledWidth;
+    objeto->x = imageX;
+    objeto->y = imageY;
+    // cropRect
+    renderObject(
+        objeto->ImageObject,
+        objeto->Img_Rendering_XPosition,
+        objeto->Img_Rendering_YPosition,
+        objeto->CROP_RECT_WIDTH,
+        objeto->CROP_RECT_HEIGHT
+    );
+    // Draw the character Square
+    // Dest rect
+    renderObject(
+            objeto->Object,
+            objeto->x,
+            objeto->y,
+            objeto->scaledHeight,
+            objeto->scaledWidth
+    );
+    SDL_RenderCopy(renderer, objeto->imageTexture, objeto->ImageObject, NULL);
+    return 0;
+}
+
+int createPanel(Painel *panel,
+                char *font_location,
+                int font_size,
+                char *textContent,
+                char *panelTitle,
+                int panelXLocation,
+                int panelYLocation,
+                int panelWidth,
+                int panelHeight,
+                int textX,
+                int textY,
+                int textWidth,
+                int textHeight,
+                SDL_Color textColor
+                ){
+    TTF_Font *font = loadFont(font_location, font_size);
+    SDL_Surface* textSurface = TTF_RenderText_Solid(font, textContent, textColor);
+    if (textSurface == NULL) {
+        printf("Failed to create text surface: %s\n", TTF_GetError());
+        TTF_CloseFont(font);
+        SDL_DestroyRenderer(renderer);
+        SDL_DestroyWindow(window);
+        TTF_Quit();
+        SDL_Quit();
+        return -1;
+    }
+
+    SDL_Texture* textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+    if (textTexture == NULL) {
+        printf("Failed to create text texture: %s\n", SDL_GetError());
+        SDL_FreeSurface(textSurface);
+        TTF_CloseFont(font);
+        SDL_DestroyRenderer(renderer);
+        SDL_DestroyWindow(window);
+        TTF_Quit();
+        SDL_Quit();
+        return -1;
+    }
+    SDL_FreeSurface(textSurface);
+    SDL_Rect *panelRect = malloc(sizeof(SDL_Rect));
+    panelRect->x = panelXLocation;
+    panelRect->y = panelYLocation;
+    panelRect->h = panelHeight;
+    panelRect->w = panelWidth;
+
+
+    SDL_RenderFillRect(renderer, panelRect);
+
+    SDL_Rect *textRect = malloc(sizeof(SDL_Rect));
+    textRect->x = textX;
+    textRect->y = textY;
+    textRect->h = textHeight;
+    textRect->w = textWidth;
+
+    panel->panelTexture = textTexture;
+    panel->panelRect = panelRect;
+    panel->textRect = textRect;
+    panel->titulo = panelTitle;
+    panel->text = textContent;
+    panel->font = font;
+    panel->textHeight = textHeight;
+    panel->textWidth = textWidth;
+    panel->textX = textX;
+    panel->textY = textY;
+    panel->x = panelXLocation;
+    panel->y = panelYLocation;
+    panel->w = panelHeight;
+    panel->h = panelWidth;
+    return 0;
+}
+
+int renderPanel(Painel *panel){
+    SDL_QueryTexture(panel->panelTexture, NULL, NULL, &panel->textRect->w, &panel->textRect->h);
+    SDL_RenderCopy(renderer, panel->panelTexture, NULL, panel->textRect);
+    return 0;
+}
+
+int DestroyPanel(Painel *panel){
+    SDL_DestroyTexture(panel->panelTexture);
+    TTF_CloseFont(panel->font);
     return 0;
 }

@@ -1,11 +1,11 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include <SDL2/SDL_ttf.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "objects.h"
 
 int QUIT = 0;
-int FRAME_DELAY = 50;
+int FRAME_DELAY = 0;
 
 // main loop to handle the entire game
 // it makes it easier to handle alterations
@@ -16,14 +16,17 @@ void gameLoop(){
                                           800, 600,
                                           SDL_WINDOW_FULLSCREEN_DESKTOP);
     // renderer variable where you write all the forms and vectors
+    TTF_Init();
     int windowWidth, windowHeight;
     SDL_GetWindowSize(window, &windowWidth, &windowHeight);
 
     SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
     // include libraries after creating the renderer
+    #include "objects.h"
     #include "funcionalidades/eventos.h"
     #include "funcionalidades/general.h"
+
 
     // Initialize the images
     int imgFlags = IMG_INIT_PNG;
@@ -34,64 +37,118 @@ void gameLoop(){
         SDL_Quit();
         exit(0);
     }
+    Painel helloWorld;
+    SDL_Color panelColor = {255, 255, 255};
+    createPanel(&helloWorld,
+                "Sans_Pro/SourceSansPro-Regular.ttf",
+                24,
+                "Hello world!",
+                "Hello panel",
+                0,
+                0,
+                200,
+                200,
+                20,
+                20,
+                100,
+                100,
+                panelColor
+    );
 
-    // load image character for Idle
-    SDL_Texture* characterImageTexture = loadImage("hero1 32.png");
-    SDL_Texture* enemyImageTexture = loadImage("hero1.png");
     // Set the rectangle to crop from the image
     // this will control which caracter to be rendered
-    SDL_Rect Idle_Img_Rendering_Rect;
-    SDL_Rect Idle_Dest_Rect;
-    SDL_Rect Enemy_Img_Rendering_Rect;
-    SDL_Rect Enemy_Dest_Rect;
     Personagem Idle;
     Personagem Enemy;
+    Personagem Enemy2;
+    Objeto Room;
+    // it's a room
+    initObject(&Room,
+                "room",
+                windowWidth,
+                windowHeight,
+                windowWidth,
+                0,
+                0,
+                "room.png");
     // it's Idle
     initCharacter(
                     "Idle",
+                    "hero1 32.png",
                     &Idle,
                     renderer,
-                    characterImageTexture,
-                    &Idle_Img_Rendering_Rect,
-                    &Idle_Dest_Rect,
                     0,
                     0,
                     32,
                     32,
-                    32
+                    32,
+                    5
                     );
     // it's an enemy
     initCharacter(
                     "Enemy",
+                    "hero1.png",
                     &Enemy,
                     renderer,
-                    enemyImageTexture,
-                    &Enemy_Img_Rendering_Rect,
-                    &Enemy_Dest_Rect,
-                    10,
-                    10,
+                    50,
+                    50,
                     16,
                     16,
-                    16);
+                    16,
+                    5
+                    );
+    initCharacter(
+                    "Enemy 2",      // name
+                    "hero1 32.png",    // image location
+                    &Enemy2,        // Struct
+                    renderer,       // Main Renderer
+                    -50,            // initial X position
+                    -50,            // initial Y position
+                    32,             // height
+                    32,             // width
+                    32,             // size
+                    5               // speed
+                    );
     // Clear the renderer
     SDL_RenderClear(renderer);
-    SDL_RenderCopy(renderer, characterImageTexture, &Idle_Img_Rendering_Rect, NULL);
-    SDL_RenderCopy(renderer, enemyImageTexture, &Enemy_Img_Rendering_Rect, NULL);
 
 
     // Wait for the user to close the window
     while (!QUIT) {
-        handleEvents(&Idle);
         SDL_RenderClear(renderer);
+        SDL_Event event;
+        while (SDL_PollEvent(&event)) {
+            switch (event.type) {
+                case SDL_QUIT:
+                    QUIT = !QUIT;
+                    break;
+                case SDL_KEYDOWN:
+                    handleEvents(&Enemy, event);
+                    handleEvents(&Idle, event);
+                    // handleEvents(&Enemy2, event);
+                    break;
+                default:
+                    ImagePositionZero(&Idle);
+                    ImagePositionZero(&Enemy);
+                    ImagePositionZero(&Enemy2);
+                    break;
+            }
+        }
         renderCharacter(&Idle);
-        SDL_RenderCopyEx(renderer, characterImageTexture, Idle.ImageObject, Idle.Object, 0, NULL, SDL_FLIP_NONE);
+        renderCharacter(&Enemy);
+        renderCharacter(&Enemy2);
+        renderGameObject(&Room);
+        renderPanel(&helloWorld);
 
         // Update the screen
         SDL_RenderPresent(renderer);
     }
-    
+
+
+    DestroyPanel(&helloWorld);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
+    TTF_Quit();
+    SDL_Quit();
     SDL_Quit();
     exit(0);
 }

@@ -20,16 +20,40 @@ typedef struct {
     int life;
 } Personagem;
 
+
 typedef struct{
     SDL_Renderer *renderer;
     SDL_Texture *imageTexture;
     SDL_Rect *Object;
     SDL_Rect *ImageObject;
+    char *objectName;
     int Img_Rendering_XPosition;
     int Img_Rendering_YPosition;
+    int IMAGE_COUNT;
+    int FramesCount;
+    int FrameLoop;
+    int Dest_Rect_Size;
     int scaledHeight;
     int scaledWidth;
     int CROP_RECT_WIDTH;
     int CROP_RECT_HEIGHT;
-    int Character_Dest_Rect_Size;
+    int x;
+    int y;
 } Objeto;
+
+typedef struct{
+    SDL_Texture *panelTexture;
+    SDL_Rect *textRect;
+    SDL_Rect *panelRect;
+    TTF_Font *font;
+    char *text;
+    char *titulo;
+    int textX;
+    int textY;
+    int textHeight;
+    int textWidth;
+    int x;
+    int y;
+    int h;
+    int w;
+} Painel;
