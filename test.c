@@ -35,6 +35,63 @@ void renderTileMap(SDL_Renderer* renderer, TileMap* tileMap, SDL_Texture* floorT
     }
 }
 
+TileMap* loadTileMap(const char* filename) {
+    SDL_Surface* imageSurface = IMG_Load(filename);
+    if (!imageSurface) {
+        printf("Failed to load image: %s\n", IMG_GetError());
+        return NULL;
+    }
+
+    TileMap* tileMap = (TileMap*)malloc(sizeof(TileMap));
+    if (!tileMap) {
+        printf("Failed to allocate memory for tile map\n");
+        SDL_FreeSurface(imageSurface);
+        return NULL;
+    }
+
+    tileMap->width = imageSurface->w / TILE_SIZE;
+    tileMap->height = imageSurface->h / TILE_SIZE;
+
+    tileMap->tiles = (TileType**)malloc(tileMap->height * sizeof(TileType*));
+    if (!tileMap->tiles) {
+        printf("Failed to allocate memory for tiles\n");
+        free(tileMap);
+        SDL_FreeSurface(imageSurface);
+        return NULL;
+    }
+
+    Uint32* pixels = (Uint32*)imageSurface->pixels;
+
+    for (int y = 0; y < tileMap->height; y++) {
+        tileMap->tiles[y] = (TileType*)malloc(tileMap->width * sizeof(TileType));
+        if (!tileMap->tiles[y]) {
+            printf("Failed to allocate memory for tiles\n");
+            for (int i = 0; i < y; i++) {
+                free(tileMap->tiles[i]);
+            }
+            free(tileMap->tiles);
+            free(tileMap);
+            SDL_FreeSurface(imageSurface);
+            return NULL;
+        }
+
+        for (int x = 0; x < tileMap->width; x++) {
+            Uint8 r, g, b, a;
+            SDL_GetRGBA(pixels[(y * TILE_SIZE) * imageSurface->w + (x * TILE_SIZE)], imageSurface->format, &r, &g, &b, &a);
+            if (r == 255 && g == 255 && b == 255 && a == 255) {
+                tileMap->tiles[y][x] = TILE_WALL;
+            } else {
+                tileMap->tiles[y][x] = TILE_FLOOR;
+            }
+        }
+    }
+
+    SDL_FreeSurface(imageSurface);
+
+    return tileMap;
+}
+
+
 int main() {
     SDL_Init(SDL_INIT_VIDEO);
 

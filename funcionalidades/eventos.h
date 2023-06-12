@@ -1,7 +1,7 @@
 int QUIT = 0;
 int FRAME_DELAY = 300;
 
-void characterMovement(Personagem *Character, Objeto *Room, SDL_Event event) {
+void characterMovement(Personagem *Character, Mapa *Room, SDL_Event event) {
     switch (event.key.keysym.sym) {
         // character movement in the box
         case SDLK_w:

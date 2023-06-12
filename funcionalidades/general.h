@@ -1,6 +1,6 @@
 #include <SDL2/SDL.h>
 #include <stdlib.h>
-
+#define TILE_SIZE 16
 // Creates a Panel and returns an Object as a renderer
 // it's only to make it easier
 int renderObject(SDL_Rect* Object, int x_pos, int y_pos, int height, int width){
@@ -170,6 +170,28 @@ TTF_Font *loadFont(char *location, char size){
         return font;
     }
     return font;
+}
+
+// this function is only used to initialize the map tiles
+// with this you are then able to have an image associated
+// to the object and then render the map
+int initMapObject(
+                Objeto *objeto,
+                char *Name,
+                char *imageLocation){
+    objeto->format = SDL_AllocFormat(SDL_GetWindowPixelFormat(window));
+    if (objeto->format == NULL) {
+        printf("Failed to allocate pixel format: %s\n", SDL_GetError());
+        SDL_DestroyTexture(objeto->imageTexture);
+        SDL_DestroyRenderer(renderer);
+        SDL_DestroyWindow(window);
+        IMG_Quit();
+        SDL_Quit();
+    }
+    objeto->objectName = Name;
+    objeto->imageTexture = loadImage(imageLocation, objeto);
+    printf("Width: %d\nHeight: %d\n", objeto->position.w, objeto->position.h);
+    return 0;
 }
 
 int initObject(
@@ -350,4 +372,19 @@ TileMap* loadTileMap(const char* filename) {
     SDL_FreeSurface(imageSurface);
 
     return tileMap;
+}
+
+void renderTileMap(SDL_Renderer *renderer, TileMap* tileMap, SDL_Texture* floorTexture, SDL_Texture* wallTexture) {
+    for (int y = 0; y < tileMap->height; y++) {
+        for (int x = 0; x < tileMap->width; x++) {
+            TileType tile = tileMap->tiles[y][x];
+            SDL_Rect destRect = { x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE };
+
+            if (tile == TILE_WALL) {
+                SDL_RenderCopy(renderer, wallTexture, NULL, &destRect);
+            } else {
+                SDL_RenderCopy(renderer, floorTexture, NULL, &destRect);
+            }
+        }
+    }
 }
