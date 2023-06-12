@@ -4,7 +4,7 @@
 
 #define MAP_WIDTH 800
 #define MAP_HEIGHT 600
-#define TILE_SIZE 32
+#define TILE_SIZE 15
 
 typedef enum {
     TILE_EMPTY,
