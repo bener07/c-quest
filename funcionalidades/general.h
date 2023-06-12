@@ -11,8 +11,10 @@ int renderObject(SDL_Rect* Object, int x_pos, int y_pos, int height, int width){
     return 0;
 }
 
-SDL_Texture *loadImage(char *location){
+SDL_Texture *loadImage(char *location, Objeto* objeto){
     SDL_Surface* imageSurface = IMG_Load(location);
+    objeto->position.w = imageSurface->w;
+    objeto->position.h = imageSurface->h;
     if (imageSurface == NULL) {
         printf("Failed to load image: %s\n", IMG_GetError());
         SDL_DestroyRenderer(renderer);
@@ -48,22 +50,22 @@ int initCharacter(
                 int speed)
     {
     Character->name = Name;
-    Character->CROP_RECT_WIDTH = width;
-    Character->CROP_RECT_HEIGHT = height;
+    Character->position.w = width;
+    Character->position.h = height;
     Character->Character_Dest_Rect_Size = size;
     Character->renderer = renderer;
-    Character->imageTexture = loadImage(imageLocation);
+    Character->imageTexture = loadImage(imageLocation, Character);
     SDL_Rect *Character_Img_Rendering_Rect = malloc(sizeof(SDL_Rect));
     Character->ImageObject = Character_Img_Rendering_Rect;
     SDL_Rect *Character_Dest_Rect = malloc(sizeof(SDL_Rect));
     Character->Object = Character_Dest_Rect;
 
     // Calculate the scale factor to fit the cropped image into the Character_Dest_Rect
-    double scaleFactor = (double)Character->Character_Dest_Rect_Size / Character->CROP_RECT_WIDTH;
+    double scaleFactor = (double)Character->Character_Dest_Rect_Size / Character->position.w;
 
     // Calculate the scaled dimensions of the cropped image
-    int scaledWidth = Character->CROP_RECT_WIDTH * scaleFactor;
-    int scaledHeight = Character->CROP_RECT_HEIGHT * scaleFactor;
+    int scaledWidth = Character->position.w * scaleFactor;
+    int scaledHeight = Character->position.h * scaleFactor;
 
     // square X and Y
     int squareX = (windowWidth - Character->Character_Dest_Rect_Size) / 2;
@@ -78,25 +80,25 @@ int initCharacter(
     Character->scaledHeight = scaledHeight;
     Character->scaledWidth = scaledWidth;
     Character->IMAGE_COUNT = 3;
-    Character->x = imageX;
-    Character->y = imageY;
+    Character->position.x = imageX;
+    Character->position.y = imageY;
     Character->speed = speed;
-    Character->FramesCount = 300;
+    Character->FramesCount = speed*30;
     Character->FrameLoop = 0;
     // cropRect
     renderObject(
         Character->ImageObject,
         Character->Img_Rendering_XPosition,
         Character->Img_Rendering_YPosition,
-        Character->CROP_RECT_WIDTH,
-        Character->CROP_RECT_HEIGHT
+        Character->position.h,
+        Character->position.w
     );
     // Draw the character Square
     // Dest rect
     renderObject(
             Character->Object,
-            Character->x,
-            Character->y,
+            Character->position.x,
+            Character->position.y,
             Character->scaledHeight,
             Character->scaledWidth
     );
@@ -108,12 +110,12 @@ int initCharacter(
 int characterAnimationRendering(Personagem *Character){
     /* A variável IMAGE_COUNT tem a quantidade total de caracteres que existem na imagem
        assim se tivermos 3 imagens então vamos contar como sendo 6 pois aí conta-mos todos os valores
-       da animação em que 3 imagens vão andar para a frente (Character->CROP_RECT_WIDTH) ou para trás (-Character->CROP_RECT_WIDTH)
+       da animação em que 3 imagens vão andar para a frente (Character->position.w) ou para trás (-Character->position.w)
     */
     if (Character->FrameLoop == Character->FramesCount)
-        if(Character->Img_Rendering_XPosition <= Character->CROP_RECT_WIDTH * Character->IMAGE_COUNT*2){
+        if(Character->Img_Rendering_XPosition <= Character->position.w * Character->IMAGE_COUNT*2){
                 Character->FrameLoop = 0;
-                return (Character->Img_Rendering_XPosition <= Character->CROP_RECT_WIDTH) ? Character->CROP_RECT_WIDTH : -Character->CROP_RECT_WIDTH;
+                return (Character->Img_Rendering_XPosition <= Character->position.w) ? Character->position.w : -Character->position.w;
             }
     Character->FrameLoop += 1;
     return 0;
@@ -126,14 +128,14 @@ int renderCharacter(Personagem *Character){
         Character->ImageObject,
         Character->Img_Rendering_XPosition,
         Character->Img_Rendering_YPosition,
-        Character->CROP_RECT_WIDTH,
-        Character->CROP_RECT_HEIGHT
+        Character->position.w,
+        Character->position.h
     );
     // Draw the character Square
     renderObject(
             Character->Object,
-            Character->x,
-            Character->y,
+            Character->position.x,
+            Character->position.y,
             Character->scaledHeight,
             Character->scaledWidth
     );
@@ -144,23 +146,15 @@ int renderCharacter(Personagem *Character){
 
 
 int renderGameObject(Objeto *objeto){
-    // draw the rect of the image character
-    renderObject(
-        objeto->ImageObject,
-        objeto->Img_Rendering_XPosition,
-        objeto->Img_Rendering_YPosition,
-        objeto->CROP_RECT_WIDTH,
-        objeto->CROP_RECT_HEIGHT
-    );
     // Draw the character Square
     renderObject(
         objeto->Object,
-        objeto->x,
-        objeto->y,
-        objeto->scaledHeight,
-        objeto->scaledWidth
+        objeto->position.x,
+        objeto->position.y,
+        objeto->position.h,
+        objeto->position.w
     );
-    SDL_RenderCopyEx(renderer, objeto->imageTexture, objeto->ImageObject, objeto->Object, 0, NULL, SDL_FLIP_NONE);
+    SDL_RenderCopy(renderer, objeto->imageTexture, NULL, &objeto->position);
     return 0;
 }
 
@@ -181,67 +175,40 @@ TTF_Font *loadFont(char *location, char size){
 int initObject(
                 Objeto *objeto,
                 char *Name,
-                int width,
-                int height,
-                int size,
                 int x,
                 int y,
                 char *imageLocation){
+    objeto->format = SDL_AllocFormat(SDL_GetWindowPixelFormat(window));
+    if (objeto->format == NULL) {
+        printf("Failed to allocate pixel format: %s\n", SDL_GetError());
+        SDL_DestroyTexture(objeto->imageTexture);
+        SDL_DestroyRenderer(renderer);
+        SDL_DestroyWindow(window);
+        IMG_Quit();
+        SDL_Quit();
+    }
     objeto->objectName = Name;
-    objeto->CROP_RECT_WIDTH = width;
-    objeto->CROP_RECT_HEIGHT = height;
-    objeto->Dest_Rect_Size = size;
-    objeto->renderer = renderer;
-    objeto->imageTexture = loadImage(imageLocation);
-    objeto->IMAGE_COUNT = 0;
-    objeto->FramesCount = 0;
-    objeto->FrameLoop = 0;
-
-    SDL_Rect *Img_Rendering_Rect = malloc(sizeof(SDL_Rect));
-    objeto->ImageObject = Img_Rendering_Rect;
+    objeto->imageTexture = loadImage(imageLocation, objeto);
+    printf("Width: %d\nHeight: %d\n", objeto->position.w, objeto->position.h);
 
     SDL_Rect *Dest_Rect = malloc(sizeof(SDL_Rect));
     objeto->Object = Dest_Rect;
 
-    // Calculate the scale factor to fit the cropped image into the Character_Dest_Rect
-    double scaleFactor = (double)objeto->Dest_Rect_Size / objeto->CROP_RECT_WIDTH;
-
-    // Calculate the scaled dimensions of the cropped image
-    int scaledWidth = objeto->CROP_RECT_WIDTH * scaleFactor;
-    int scaledHeight = objeto->CROP_RECT_HEIGHT * scaleFactor;
-
-    // square X and Y
-    int squareX = (windowWidth - objeto->Dest_Rect_Size) / 2;
-    int squareY = (windowHeight - objeto->Dest_Rect_Size) / 2;
 
     // Calculate the position of the scaled image within the Character_Dest_Rect
-    int imageX = x + (squareX + (objeto->Dest_Rect_Size - scaledWidth) / 2);
-    int imageY = y + (squareY + (objeto->Dest_Rect_Size - scaledHeight) / 2);
+    objeto->position.x = x + (windowWidth - objeto->position.w) / 2;
+    objeto->position.y = y + (windowHeight - objeto->position.h) / 2;
 
-    objeto->Img_Rendering_XPosition = 0;
-    objeto->Img_Rendering_YPosition = 0;
-    objeto->scaledHeight = scaledHeight;
-    objeto->scaledWidth = scaledWidth;
-    objeto->x = imageX;
-    objeto->y = imageY;
-    // cropRect
-    renderObject(
-        objeto->ImageObject,
-        objeto->Img_Rendering_XPosition,
-        objeto->Img_Rendering_YPosition,
-        objeto->CROP_RECT_WIDTH,
-        objeto->CROP_RECT_HEIGHT
-    );
     // Draw the character Square
     // Dest rect
     renderObject(
             objeto->Object,
-            objeto->x,
-            objeto->y,
-            objeto->scaledHeight,
-            objeto->scaledWidth
+            objeto->position.x,
+            objeto->position.y,
+            objeto->position.h,
+            objeto->position.w
     );
-    SDL_RenderCopy(renderer, objeto->imageTexture, objeto->ImageObject, NULL);
+    SDL_RenderCopy(renderer, objeto->imageTexture, NULL, &objeto->position);
     return 0;
 }
 

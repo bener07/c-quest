@@ -1,97 +1,151 @@
 #include <stdio.h>
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_image.h>
 
-const int WINDOW_WIDTH = 800;
-const int WINDOW_HEIGHT = 600;
-const int PANEL_HEIGHT = 100;
-const char* PANEL_TEXT = "Welcome to the Game";
+#define MAP_WIDTH 800
+#define MAP_HEIGHT 600
+#define TILE_SIZE 32
 
-int main() {
-    SDL_Init(SDL_INIT_VIDEO);
-    TTF_Init();
+typedef enum {
+    TILE_EMPTY,
+    TILE_WALL,
+    TILE_FLOOR,
+    NUM_TILE_TYPES
+} TileType;
 
-    SDL_Window* window = SDL_CreateWindow("Panel Example", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                                          WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_SHOWN);
-    if (window == NULL) {
-        printf("Failed to create window: %s\n", SDL_GetError());
-        TTF_Quit();
-        SDL_Quit();
-        return -1;
+TileType map[MAP_HEIGHT][MAP_WIDTH];
+
+SDL_Texture* tileTextures[NUM_TILE_TYPES];
+
+// Load tile textures
+void loadTileTextures(SDL_Renderer* renderer) {
+    // Load texture for TILE_WALL
+    SDL_Surface* wallSurface = IMG_Load("imagens/wall.png");
+    if (wallSurface == NULL) {
+        printf("Failed to load wall image: %s\n", IMG_GetError());
+        return;
+    }
+    tileTextures[TILE_WALL] = SDL_CreateTextureFromSurface(renderer, wallSurface);
+    SDL_FreeSurface(wallSurface);
+
+    // Load texture for TILE_FLOOR
+    SDL_Surface* floorSurface = IMG_Load("imagens/floor.png");
+    if (floorSurface == NULL) {
+        printf("Failed to load floor image: %s\n", IMG_GetError());
+        return;
+    }
+    tileTextures[TILE_FLOOR] = SDL_CreateTextureFromSurface(renderer, floorSurface);
+    SDL_FreeSurface(floorSurface);
+
+    // ... Load textures for other tile types if needed
+}
+
+// Load the map from an image
+void loadMapFromImage(const char* filename) {
+    SDL_Surface* mapSurface = IMG_Load(filename);
+    if (mapSurface == NULL) {
+        printf("Failed to load map image: %s\n", IMG_GetError());
+        return;
     }
 
+    for (int y = 0; y < MAP_HEIGHT; ++y) {
+        for (int x = 0; x < MAP_WIDTH; ++x) {
+            Uint32 pixel = ((Uint32*)mapSurface->pixels)[y * MAP_WIDTH + x];
+            Uint8 r, g, b;
+            SDL_GetRGB(pixel, mapSurface->format, &r, &g, &b);
+
+            if (r == 255 && g == 255 && b == 255) {
+                map[y][x] = TILE_WALL;
+            } else {
+                map[y][x] = TILE_FLOOR;
+            }
+        }
+    }
+
+    SDL_FreeSurface(mapSurface);
+}
+
+// Render the map
+void renderMap(SDL_Renderer* renderer) {
+    for (int y = 0; y < MAP_HEIGHT; ++y) {
+        for (int x = 0; x < MAP_WIDTH; ++x) {
+            TileType tile = map[y][x];
+
+            SDL_Texture* texture = tileTextures[tile];
+
+            if (texture != NULL) {
+                SDL_Rect destRect = { x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE };
+                SDL_RenderCopy(renderer, texture, NULL, &destRect);
+            }
+        }
+    }
+}
+
+int main() {
+    // Initialize SDL
+    if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+        printf("Failed to initialize SDL: %s\n", SDL_GetError());
+        return 1;
+    }
+
+    // Create a window
+    SDL_Window* window = SDL_CreateWindow("Tile Map Example", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 800, 600, SDL_WINDOW_SHOWN);
+    if (window == NULL) {
+        printf("Failed to create window: %s\n", SDL_GetError());
+        return 1;
+    }
+
+    // Create a renderer
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     if (renderer == NULL) {
         printf("Failed to create renderer: %s\n", SDL_GetError());
-        SDL_DestroyWindow(window);
-        TTF_Quit();
-        SDL_Quit();
-        return -1;
+        return 1;
     }
 
-    TTF_Font* font = TTF_OpenFont("Sans_Pro/SourceSansPro-Regular.ttf", 24);
-    if (font == NULL) {
-        printf("Failed to load font: %s\n", TTF_GetError());
-        SDL_DestroyRenderer(renderer);
-        SDL_DestroyWindow(window);
-        TTF_Quit();
-        SDL_Quit();
-        return -1;
+    // Initialize SDL_image
+    int imgFlags = IMG_INIT_PNG;
+    if ((IMG_Init(imgFlags) & imgFlags) != imgFlags) {
+        printf("Failed to initialize SDL_image: %s\n", IMG_GetError());
+        return 1;
     }
 
-    SDL_Color textColor = {255, 255, 255};
-    SDL_Surface* textSurface = TTF_RenderText_Solid(font, PANEL_TEXT, textColor);
-    if (textSurface == NULL) {
-        printf("Failed to create text surface: %s\n", TTF_GetError());
-        TTF_CloseFont(font);
-        SDL_DestroyRenderer(renderer);
-        SDL_DestroyWindow(window);
-        TTF_Quit();
-        SDL_Quit();
-        return -1;
-    }
+    // Load the tile textures
+    loadTileTextures(renderer);
 
-    SDL_Texture* textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
-    if (textTexture == NULL) {
-        printf("Failed to create text texture: %s\n", SDL_GetError());
-        SDL_FreeSurface(textSurface);
-        TTF_CloseFont(font);
-        SDL_DestroyRenderer(renderer);
-        SDL_DestroyWindow(window);
-        TTF_Quit();
-        SDL_Quit();
-        return -1;
-    }
+    // Load the map from an image
+    loadMapFromImage("imagens/room.png");
 
-    SDL_FreeSurface(textSurface);
-
-    SDL_RenderClear(renderer);
-
-    SDL_Rect panelRect = {0, 0, WINDOW_WIDTH, PANEL_HEIGHT};
-    SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
-    SDL_RenderFillRect(renderer, &panelRect);
-
-    SDL_Rect textRect = {10, 10, 0, 0};
-    SDL_QueryTexture(textTexture, NULL, NULL, &textRect.w, &textRect.h);
-    SDL_RenderCopy(renderer, textTexture, NULL, &textRect);
-
-    SDL_RenderPresent(renderer);
-
-    SDL_Event event;
+    // Game loop
     int quit = 0;
     while (!quit) {
+        SDL_Event event;
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
                 quit = 1;
             }
         }
+
+        // Clear the renderer
+        SDL_RenderClear(renderer);
+
+        // Render the map
+        renderMap(renderer);
+
+        // Present the renderer
+        SDL_RenderPresent(renderer);
     }
 
-    SDL_DestroyTexture(textTexture);
-    TTF_CloseFont(font);
+    // Cleanup tile textures
+    for (int i = 0; i < NUM_TILE_TYPES; ++i) {
+        SDL_DestroyTexture(tileTextures[i]);
+    }
+
+    // Cleanup SDL_image
+    IMG_Quit();
+
+    // Cleanup SDL
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
-    TTF_Quit();
     SDL_Quit();
 
     return 0;

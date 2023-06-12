@@ -15,17 +15,17 @@ void gameLoop(){
                                           SDL_WINDOWPOS_UNDEFINED,
                                           800, 600,
                                           SDL_WINDOW_FULLSCREEN_DESKTOP);
-    // renderer variable where you write all the forms and vectors
     TTF_Init();
     int windowWidth, windowHeight;
     SDL_GetWindowSize(window, &windowWidth, &windowHeight);
 
+    // renderer variable where you write all the forms and vectors
     SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
     // include libraries after creating the renderer
     #include "objects.h"
-    #include "funcionalidades/eventos.h"
     #include "funcionalidades/general.h"
+    #include "funcionalidades/eventos.h"
 
 
     // Initialize the images
@@ -58,22 +58,17 @@ void gameLoop(){
     // Set the rectangle to crop from the image
     // this will control which caracter to be rendered
     Personagem Idle;
-    Personagem Enemy;
-    Personagem Enemy2;
     Objeto Room;
     // it's a room
     initObject(&Room,
-                "room",
-                windowWidth,
-                windowHeight,
-                windowWidth,
+                "Room 2",
                 0,
                 0,
-                "room.png");
+                "imagens/room.png");
     // it's Idle
     initCharacter(
                     "Idle",
-                    "hero1 32.png",
+                    "imagens/hero1 32.png",
                     &Idle,
                     renderer,
                     0,
@@ -83,34 +78,8 @@ void gameLoop(){
                     32,
                     5
                     );
-    // it's an enemy
-    initCharacter(
-                    "Enemy",
-                    "hero1.png",
-                    &Enemy,
-                    renderer,
-                    50,
-                    50,
-                    16,
-                    16,
-                    16,
-                    5
-                    );
-    initCharacter(
-                    "Enemy 2",      // name
-                    "hero1 32.png",    // image location
-                    &Enemy2,        // Struct
-                    renderer,       // Main Renderer
-                    -50,            // initial X position
-                    -50,            // initial Y position
-                    32,             // height
-                    32,             // width
-                    32,             // size
-                    5               // speed
-                    );
     // Clear the renderer
     SDL_RenderClear(renderer);
-
 
     // Wait for the user to close the window
     while (!QUIT) {
@@ -122,21 +91,16 @@ void gameLoop(){
                     QUIT = !QUIT;
                     break;
                 case SDL_KEYDOWN:
-                    handleEvents(&Enemy, event);
-                    handleEvents(&Idle, event);
-                    // handleEvents(&Enemy2, event);
+                    characterMovement(&Idle, &Room, event);
                     break;
                 default:
                     ImagePositionZero(&Idle);
-                    ImagePositionZero(&Enemy);
-                    ImagePositionZero(&Enemy2);
                     break;
             }
         }
         renderCharacter(&Idle);
-        renderCharacter(&Enemy);
-        renderCharacter(&Enemy2);
         renderGameObject(&Room);
+        // renderGameObject(&Room3);
         renderPanel(&helloWorld);
 
         // Update the screen

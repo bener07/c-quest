@@ -3,42 +3,38 @@ typedef struct {
     SDL_Texture *imageTexture;
     SDL_Rect *Object;
     SDL_Rect *ImageObject;
+    SDL_Rect position;
     int Img_Rendering_XPosition;
     int Img_Rendering_YPosition;
     int scaledHeight;
     int scaledWidth;
-    int CROP_RECT_WIDTH;
-    int CROP_RECT_HEIGHT;
     int IMAGE_COUNT;
     int Character_Dest_Rect_Size;
     int FramesCount;
     int FrameLoop;
     char *name;
-    int x;
-    int y;
     int speed;
     int life;
 } Personagem;
 
 
 typedef struct{
-    SDL_Renderer *renderer;
     SDL_Texture *imageTexture;
     SDL_Rect *Object;
     SDL_Rect *ImageObject;
+    SDL_Rect position;
+    SDL_PixelFormat *format;
     char *objectName;
     int Img_Rendering_XPosition;
     int Img_Rendering_YPosition;
     int IMAGE_COUNT;
     int FramesCount;
     int FrameLoop;
+    int imageOriginalWidth;
+    int imageOriginalHeight;
     int Dest_Rect_Size;
     int scaledHeight;
     int scaledWidth;
-    int CROP_RECT_WIDTH;
-    int CROP_RECT_HEIGHT;
-    int x;
-    int y;
 } Objeto;
 
 typedef struct{
@@ -57,3 +53,9 @@ typedef struct{
     int h;
     int w;
 } Painel;
+
+typedef enum{
+    TILE_EMPTY;
+    TILE_WALL;
+    TILE_FLOOR;
+} TileType;
