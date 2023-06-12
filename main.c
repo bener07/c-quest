@@ -59,6 +59,8 @@ void gameLoop(){
     // this will control which caracter to be rendered
     Personagem Idle;
     Objeto Room;
+    Mapa main;
+    main->map = loadTileMap("room 16 line.png");
     // it's a room
     initObject(&Room,
                 "Room 2",

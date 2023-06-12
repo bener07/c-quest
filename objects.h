@@ -54,8 +54,21 @@ typedef struct{
     int w;
 } Painel;
 
-typedef enum{
-    TILE_EMPTY;
-    TILE_WALL;
-    TILE_FLOOR;
+typedef enum {
+    TILE_FLOOR,
+    TILE_WALL
 } TileType;
+
+typedef struct {
+    TileType** tiles;
+    int width;
+    int height;
+} TileMap;
+
+typedef struct {
+    TileMap *map;
+    SDL_Texture *imageTexture;
+    SDL_Rect *Object;
+    SDL_Rect position;
+    char *objectName;
+} Mapa;
