@@ -15,6 +15,7 @@ typedef struct {
     char *name;
     int speed;
     int life;
+    int mapCount;
 } Personagem;
 
 
@@ -35,6 +36,7 @@ typedef struct{
     int Dest_Rect_Size;
     int scaledHeight;
     int scaledWidth;
+    int exists;
 } Objeto;
 
 typedef struct{

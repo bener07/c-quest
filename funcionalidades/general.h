@@ -3,11 +3,20 @@
 #define TILE_SIZE 16
 // Creates a Panel and returns an Object as a renderer
 // it's only to make it easier
-int renderObject(SDL_Rect* Object, int x_pos, int y_pos, int height, int width){
+int setPositionValues(SDL_Rect* Object, int x_pos, int y_pos, int height, int width){
     Object->x = x_pos;
     Object->y = y_pos;
     Object->h = height;
     Object->w = width;
+    return 0;
+}
+
+int renderObject(Objeto *object){
+    if(!object->exists){
+        printf("Object deleted!\n");
+        return 1;
+    }
+    SDL_RenderCopy(renderer, object->imageTexture, NULL, &object->position);
     return 0;
 }
 
@@ -50,6 +59,8 @@ int initCharacter(
                 int speed)
     {
     Character->name = Name;
+    Character->life = 100;
+    Character->mapCount = 0;
     Character->position.w = width;
     Character->position.h = height;
     Character->Character_Dest_Rect_Size = size;
@@ -83,10 +94,10 @@ int initCharacter(
     Character->position.x = imageX;
     Character->position.y = imageY;
     Character->speed = speed;
-    Character->FramesCount = speed*30;
+    Character->FramesCount = speed*5;
     Character->FrameLoop = 0;
     // cropRect
-    renderObject(
+    setPositionValues(
         Character->ImageObject,
         Character->Img_Rendering_XPosition,
         Character->Img_Rendering_YPosition,
@@ -95,7 +106,7 @@ int initCharacter(
     );
     // Draw the character Square
     // Dest rect
-    renderObject(
+    setPositionValues(
             Character->Object,
             Character->position.x,
             Character->position.y,
@@ -124,7 +135,7 @@ int characterAnimationRendering(Personagem *Character){
 
 int renderCharacter(Personagem *Character){
     // draw the rect of the image character
-    renderObject(
+    setPositionValues(
         Character->ImageObject,
         Character->Img_Rendering_XPosition,
         Character->Img_Rendering_YPosition,
@@ -132,7 +143,7 @@ int renderCharacter(Personagem *Character){
         Character->position.h
     );
     // Draw the character Square
-    renderObject(
+    setPositionValues(
             Character->Object,
             Character->position.x,
             Character->position.y,
@@ -147,7 +158,7 @@ int renderCharacter(Personagem *Character){
 
 int renderGameObject(Objeto *objeto){
     // Draw the character Square
-    renderObject(
+    setPositionValues(
         objeto->Object,
         objeto->position.x,
         objeto->position.y,
@@ -190,7 +201,6 @@ int initMapObject(
     }
     objeto->objectName = Name;
     objeto->imageTexture = loadImage(imageLocation, objeto);
-    printf("Width: %d\nHeight: %d\n", objeto->position.w, objeto->position.h);
     return 0;
 }
 
@@ -209,6 +219,7 @@ int initObject(
         IMG_Quit();
         SDL_Quit();
     }
+    objeto->exists = 1;
     objeto->objectName = Name;
     objeto->imageTexture = loadImage(imageLocation, objeto);
     printf("Width: %d\nHeight: %d\n", objeto->position.w, objeto->position.h);
@@ -223,7 +234,7 @@ int initObject(
 
     // Draw the character Square
     // Dest rect
-    renderObject(
+    setPositionValues(
             objeto->Object,
             objeto->position.x,
             objeto->position.y,
@@ -247,8 +258,8 @@ int createPanel(Painel *panel,
                 int textY,
                 int textWidth,
                 int textHeight,
-                SDL_Color textColor
-                ){
+                SDL_Color textColor)
+{
     TTF_Font *font = loadFont(font_location, font_size);
     SDL_Surface* textSurface = TTF_RenderText_Solid(font, textContent, textColor);
     if (textSurface == NULL) {
@@ -273,14 +284,6 @@ int createPanel(Painel *panel,
         return -1;
     }
     SDL_FreeSurface(textSurface);
-    SDL_Rect *panelRect = malloc(sizeof(SDL_Rect));
-    panelRect->x = panelXLocation;
-    panelRect->y = panelYLocation;
-    panelRect->h = panelHeight;
-    panelRect->w = panelWidth;
-
-
-    SDL_RenderFillRect(renderer, panelRect);
 
     SDL_Rect *textRect = malloc(sizeof(SDL_Rect));
     textRect->x = textX;
@@ -289,7 +292,6 @@ int createPanel(Painel *panel,
     textRect->w = textWidth;
 
     panel->panelTexture = textTexture;
-    panel->panelRect = panelRect;
     panel->textRect = textRect;
     panel->titulo = panelTitle;
     panel->text = textContent;
@@ -332,8 +334,8 @@ TileMap* loadTileMap(const char* filename) {
         return NULL;
     }
 
-    tileMap->width = imageSurface->w / windowWidth;
-    tileMap->height = imageSurface->h / windowHeight;
+    tileMap->width = imageSurface->w / TILE_SIZE;
+    tileMap->height = imageSurface->h / TILE_SIZE;
 
     tileMap->tiles = (TileType**)malloc(tileMap->height * sizeof(TileType*));
     if (!tileMap->tiles) {
@@ -374,6 +376,7 @@ TileMap* loadTileMap(const char* filename) {
     return tileMap;
 }
 
+
 void renderTileMap(SDL_Renderer *renderer, TileMap* tileMap, SDL_Texture* floorTexture, SDL_Texture* wallTexture) {
     for (int y = 0; y < tileMap->height; y++) {
         for (int x = 0; x < tileMap->width; x++) {
@@ -386,5 +389,79 @@ void renderTileMap(SDL_Renderer *renderer, TileMap* tileMap, SDL_Texture* floorT
                 SDL_RenderCopy(renderer, floorTexture, NULL, &destRect);
             }
         }
+    }
+}
+
+int getTileXPosition(Personagem *Character, int destination){
+    return (Character->position.x + destination) / TILE_SIZE;
+}
+
+int getTileYPosition(Personagem *Character, int destination){
+    return (Character->position.y + destination ) / TILE_SIZE;
+}
+int handleWallCollision(Personagem *Character, TileMap *tileMap, int destinationXSpeed, int destinationYSpeed){
+    TileType tileValue = tileMap->tiles[getTileYPosition(Character,destinationYSpeed)][getTileXPosition(Character, destinationXSpeed)];
+    return (tileValue == TILE_WALL);
+}
+
+
+int checkCollision(Personagem *Character, Objeto *object){
+    printf("\nCharacter x: %d\tObject (%s) x: %d", Character->position.x, object->objectName, object->position.x);
+    printf("\nCharacter y: %d\tObject (%s) y: %d", Character->position.y, object->objectName, object->position.y);
+    if(
+    object->exists &&
+    (Character->position.x +Character->position.w <= object->position.x + object->position.w
+    && Character->position.x+Character->position.w >= object->position.x
+    && Character->position.y+Character->position.h <= object->position.y + object->position.h
+    && Character->position.y + Character->position.h>= object->position.y
+    ||
+    Character->position.x <= object->position.x + object->position.w
+    && Character->position.x >= object->position.x
+    && Character->position.y <= object->position.y + object->position.h
+    && Character->position.y >= object->position.y)){
+    object->exists = 0;
+    Character->mapCount += 1;
+    }
+}
+
+void characterPanel(Personagem *Character){
+    Painel characterPanel[4];
+    char characterInfo[15];
+    SDL_Color panelColor = {255, 255, 255};
+    sprintf(characterInfo, "Mapas: %d/4", Character->mapCount);
+    createPanel(&characterPanel[0],"Sans_Pro/SourceSansPro-Regular.ttf",20,characterInfo,"Hello panel",0,0,300,200,0,10,300,30,panelColor);
+    renderPanel(&characterPanel[0]);
+
+    sprintf(characterInfo, "Life: %d", Character->life);
+    createPanel(&characterPanel[1],"Sans_Pro/SourceSansPro-Regular.ttf",20,characterInfo,"Hello panel",0,0,400,200,0,80-30,300,30,panelColor);
+    renderPanel(&characterPanel[1]);
+
+    sprintf(characterInfo, "Speed: %d", Character->speed);
+    createPanel(&characterPanel[2],"Sans_Pro/SourceSansPro-Regular.ttf",20,characterInfo,"Hello panel",0,0,400,200,0,120-30,300,30,panelColor);
+    renderPanel(&characterPanel[2]);
+
+    sprintf(characterInfo, "Name: %s", Character->name);
+    createPanel(&characterPanel[3],"Sans_Pro/SourceSansPro-Regular.ttf",20,characterInfo,"Hello panel",0,0,300,200,0,160-30,300,30,panelColor);
+    renderPanel(&characterPanel[3]);
+}
+
+void keyCollision(Personagem *Character, Objeto *object){
+    if(
+    Character->mapCount>=4 &&
+    (Character->position.x +Character->position.w <= object->position.x + object->position.w
+    && Character->position.x+Character->position.w >= object->position.x
+    && Character->position.y+Character->position.h <= object->position.y + object->position.h
+    && Character->position.y + Character->position.h>= object->position.y
+    ||
+    Character->position.x <= object->position.x + object->position.w
+    && Character->position.x >= object->position.x
+    && Character->position.y <= object->position.y + object->position.h
+    && Character->position.y >= object->position.y)){
+    Painel GameOver;
+    char characterInfo[20];
+    SDL_Color panelColor = {255, 255, 255};
+    sprintf(characterInfo, "Congragulations %s!\nYou have found the bug.", Character->name);
+    createPanel(&GameOver,"Sans_Pro/SourceSansPro-Regular.ttf",20,characterInfo,"Hello panel",0,0,300,200,0,160-30,300,30,panelColor);
+    renderPanel(&GameOver);
     }
 }
