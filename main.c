@@ -79,7 +79,7 @@ void gameLoop(){
     Objeto paper4;
     Objeto key;
     // it's Idle
-    initObject(&paper1, "Paper1", -220, -140, "imagens/paper.png");
+    initObject(&paper1, "Paper1", -180, -110, "imagens/paper.png");
     initObject(&paper2, "Paper2", -120, 170, "imagens/paper.png");
     initObject(&paper3, "Paper3", 100, 100, "imagens/paper.png");
     initObject(&paper4, "Paper4", 220, -20, "imagens/paper.png");

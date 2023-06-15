@@ -60,6 +60,7 @@ int initCharacter(
     {
     Character->name = Name;
     Character->life = 100;
+    Character->gameOver = 0;
     Character->mapCount = 0;
     Character->position.w = width;
     Character->position.h = height;
@@ -447,7 +448,7 @@ void characterPanel(Personagem *Character){
 
 void keyCollision(Personagem *Character, Objeto *object){
     if(
-    Character->mapCount>=4 &&
+    (Character->mapCount==4 || Character->gameOver) &&
     (Character->position.x +Character->position.w <= object->position.x + object->position.w
     && Character->position.x+Character->position.w >= object->position.x
     && Character->position.y+Character->position.h <= object->position.y + object->position.h
@@ -457,11 +458,12 @@ void keyCollision(Personagem *Character, Objeto *object){
     && Character->position.x >= object->position.x
     && Character->position.y <= object->position.y + object->position.h
     && Character->position.y >= object->position.y)){
+    Character->gameOver = 1;
     Painel GameOver;
-    char characterInfo[20];
+    char characterInfo[50];
     SDL_Color panelColor = {255, 255, 255};
-    sprintf(characterInfo, "Congragulations %s!\nYou have found the bug.", Character->name);
-    createPanel(&GameOver,"Sans_Pro/SourceSansPro-Regular.ttf",20,characterInfo,"Hello panel",0,0,300,200,0,160-30,300,30,panelColor);
+    sprintf(characterInfo, "Congragulations %s You Have finished the game!", Character->name);
+    createPanel(&GameOver,"Sans_Pro/SourceSansPro-Regular.ttf",30,characterInfo,"Game Over panel",0,0,300,200,windowHeight/2-200,windowWidth/2-200,300,30,panelColor);
     renderPanel(&GameOver);
     }
 }

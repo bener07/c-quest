@@ -15,6 +15,7 @@ typedef struct {
     char *name;
     int speed;
     int life;
+    int gameOver;
     int mapCount;
 } Personagem;
 
